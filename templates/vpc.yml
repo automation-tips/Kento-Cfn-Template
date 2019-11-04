@@ -1,0 +1,278 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  AZ1Parameter:
+    Type: String
+    Default: "ap-northeast-1a"
+    Description: "select availability zone"
+  
+  AZ2Parameter:
+    Type: String
+    Default: "ap-northeast-1c"
+    Description: "select availability zone"
+  
+  ProjectNameParameter:
+    Type: String
+    Default: "Sample"
+    Description: "Project name for tag"
+
+Resources:
+  # VPC
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 172.32.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Project
+          Value: 
+            Ref: ProjectNameParameter
+        - Key: Name
+          Value:
+            Ref: ProjectNameParameter
+
+  # Route Table
+  MyRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: MyVPC
+      Tags:
+        - Key: Project
+          Value: 
+            Ref: ProjectNameParameter
+        - Key: Name
+          Value: Public
+
+# Internet GateWay
+  MyInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+      - Key: Project
+        Value:
+          Ref: ProjectNameParameter
+
+  attacheGatewayToVPC:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      InternetGatewayId:
+        Ref: MyInternetGateway
+      VpcId:
+        Ref: MyVPC
+
+# Route
+  MyRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: MyRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: MyInternetGateway
+
+# Public Subnet
+  # subnet1a
+  MypublicSubnet1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        Ref: AZ1Parameter
+      MapPublicIpOnLaunch: true  ## パブリック有効
+      VpcId:
+        Ref: MyVPC
+      CidrBlock: 172.32.0.0/24
+      Tags:
+        - Key: Project
+          Value:
+            Ref: ProjectNameParameter
+        - Key: Name
+          Value: "Public Subnet 1a"
+
+  ## アタッチ
+  AddingRouteTableForPulbicSubnet1a:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId:
+        Ref: MyRouteTable
+      SubnetId:
+        Ref: MypublicSubnet1a
+    
+  # Subnet1c
+  MypublicSubnet1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        Ref: AZ2Parameter
+      MapPublicIpOnLaunch: true  ## パブリック有効
+      VpcId:
+        Ref: MyVPC
+      CidrBlock: 172.32.2.0/24
+      Tags:
+        - Key: Project
+          Value:
+            Ref: ProjectNameParameter
+        - Key: Name
+          Value: "Public Subnet 1c"
+
+  ## アタッチ
+  AddingRouteTableForPulbicSubnet1c:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId:
+        Ref: MyRouteTable
+      SubnetId:
+        Ref: MypublicSubnet1c
+
+# Private Subnet
+  # subnet1a(Private)
+  MyprivateSubnet1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        Ref: AZ1Parameter
+      MapPublicIpOnLaunch: false  ## パブリック無効
+      VpcId:
+        Ref: MyVPC
+      CidrBlock: 172.32.1.0/24
+      Tags:
+        - Key: Project
+          Value:
+            Ref: ProjectNameParameter
+        - Key: Name
+          Value: "Private Subnet 1a"
+
+  ## アタッチ
+  AddingRouteTableForPrivateSubnet1a:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId:
+        Ref: MyRouteTable
+      SubnetId:
+        Ref: MyprivateSubnet1a
+
+  # subnet1c(Private)
+  MyprivateSubnet1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        Ref: AZ2Parameter
+      MapPublicIpOnLaunch: false  ## パブリック無効
+      VpcId:
+        Ref: MyVPC
+      CidrBlock: 172.32.3.0/24
+      Tags:
+        - Key: Project
+          Value:
+            Ref: ProjectNameParameter
+        - Key: Name
+          Value: "Private Subnet 1c"
+
+  ## アタッチ
+  AddingRouteTableForPrivateSubnet1a:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId:
+        Ref: MyRouteTable
+      SubnetId:
+        Ref: MyprivateSubnet1a
+
+# Security Group
+  ## public
+  PublicSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Demo
+      VpcId:
+        Ref: MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: "80"
+          ToPort: "80"
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: "22"
+          ToPort: "22"
+          CidrIp: 0.0.0.0/0  ## 自社とか自分のお家のグローバルIPで絞ったほうが良い
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          FromPort: "0"
+          ToPort: "0"
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectNameParameter}-Public-SG
+
+# Security Group
+  ## private
+  PrivateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Demo
+      VpcId:
+        Ref: MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: "3306"
+          ToPort: "3306"
+          SourceSecurityGroupId:
+            Ref: PublicSecurityGroup  ## Public SG からの接続を許可
+        - IpProtocol: tcp
+          FromPort: "22"
+          ToPort: "22"
+          SourceSecurityGroupId:
+            Ref: PublicSecurityGroup  ## Public SG からの接続を許可
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          FromPort: "0"
+          ToPort: "0"
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectNameParameter}-Private-SG
+
+### Output ↓ クロススタック参照するやつ
+Outputs:
+  VPCId:
+    Description: "VPC ID"
+    Value:
+      Ref: MyVPC
+    Export:
+      Name: !Sub "${ProjectNameParameter}-VPC"
+  PublicSubnet1a:
+    Description: "Public Subnet az:a"
+    Value:
+      Ref: MypublicSubnet1a
+    Export:
+      Name: !Sub "${ProjectNameParameter}-PublicSubnet1a"
+  PublicSubnet1c:
+    Description: "Public Subnet az:c"
+    Value:
+      Ref: MypublicSubnet1c
+    Export:
+      Name: !Sub "${ProjectNameParameter}-PublicSubnet1c"
+  PrivateSubnet1a:
+    Description: "Private Subnet az:a"
+    Value:
+      Ref: MyprivateSubnet1a
+    Export:
+      Name: !Sub "${ProjectNameParameter}-PrivateSubnet1a"
+  PrivateSubnet1c:
+    Description: "Private Subnet az:c"
+    Value:
+      Ref: MyprivateSubnet1c
+    Export:
+      Name: !Sub "${ProjectNameParameter}-PrivateSubnet1c"
+  PublicSG:
+    Description: "Public SG"
+    Value:
+      Ref: PublicSecurityGroup
+    Export:
+      Name: !Sub "${ProjectNameParameter}-Public-SG"
+  PrivateSG:
+    Description: "Private SG"
+    Value:
+      Ref: PrivateSecurityGroup
+    Export:
+      Name: !Sub "${ProjectNameParameter}-Private-SG"

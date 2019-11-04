@@ -1,0 +1,18 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources: 
+  # VpcStackWithParams: 
+  #   Type: AWS::CloudFormation::Stack
+  #   Properties: 
+  #     TemplateURL: "./templates/vpc.yml"
+
+  # Ec2StackWithParams: 
+  #   Type: AWS::CloudFormation::Stack
+  #   Properties: 
+  #     TemplateURL: "./templates/ec2.yml"
+  #       Parameters:
+
+  # RdsStackWithParams: 
+  #   Type: AWS::CloudFormation::Stack
+  #   Properties: 
+  #     TemplateURL: "./templates/rds.yml"
+  #       Parameters: 
