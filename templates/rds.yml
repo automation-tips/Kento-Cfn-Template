@@ -14,16 +14,17 @@ Parameters:
     Description: rds root user
   RDSPasswordParameter:
     Type: String
-    Default: ''
+    Default: 'demordsadmin'
     Description: rds root password
 
 Resources:
   RDSParameterGroup:
-    Type: "AWS::Neptune::DBParameterGroup"
+    Type: "AWS::RDS::DBParameterGroup"
     Properties:
       Description: !Sub ${ProjectNameParameter} RDS Parameter Group
       Family: MySQL5.7
       Parameters:
+        max_connections: 300
         character_set_results: utf8mb4
         character_set_client: utf8mb4
         character_set_connection: utf8mb4
@@ -35,10 +36,6 @@ Resources:
       SubnetIds:
         - {"Fn::ImportValue": !Sub "${ProjectNameParameter}-PrivateSubnet1a"}
         - {"Fn::ImportValue": !Sub "${ProjectNameParameter}-PrivateSubnet1c"}
-    Tags:
-    - Key: Project
-      Value:
-        Ref: ProjectNameParameter
 
   # vpc.ymlで作成したものを使用する
   # RDSSecurityByEC2SecurityGroup:
@@ -52,7 +49,7 @@ Resources:
     Properties:
       DBName:
         Ref: ProjectNameParameter
-      DBInstanceIdentifier: !Sub ${AWS::StackName}-rds
+      DBInstanceIdentifier: !Sub ${AWS::StackName}
       AutoMinorVersionUpgrade: false
       AllocatedStorage: "30"
       MultiAZ: false
