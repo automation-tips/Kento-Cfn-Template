@@ -17,55 +17,51 @@ Parameters:
     Default: "Sample"
     Description: "Project name for tag"
 
-LogicalID:
-  Type: "AWS::EC2::Instance"
-  Properties:
-    AdditionalInfo: String
-    Affinity: String
-    AvailabilityZone: String
-    BlockDeviceMappings:
-      - BlockDeviceMapping
-    CpuOptions:
-      CpuOptions
-    CreditSpecification:
-      CreditSpecification
-    DisableApiTermination: Boolean
-    EbsOptimized: Boolean
-    ElasticGpuSpecifications:
-      - ElasticGpuSpecification
-    ElasticInferenceAccelerators:
-      - ElasticInferenceAccelerator
-    HostId: String
-    IamInstanceProfile: String
-    ImageId: String
-    InstanceInitiatedShutdownBehavior: String
-    InstanceType: String
-    Ipv6AddressCount: Integer
-    Ipv6Addresses:
-      - InstanceIpv6Address
-    KernelId: String
-    KeyName: String
-    LaunchTemplate:
-      LaunchTemplateSpecification
-    LicenseSpecifications:
-      - LicenseSpecification
-    Monitoring: Boolean
-    NetworkInterfaces:
-      - NetworkInterface
-    PlacementGroupName: String
-    PrivateIpAddress: String
-    RamdiskId: String
-    SecurityGroupIds:
-      - String
-    SecurityGroups:
-      - String
-    SourceDestCheck: Boolean
-    SsmAssociations:
-      - SsmAssociation
-    SubnetId: String
-    Tags:
-      - Tag
-    Tenancy: String
-    UserData: String
-    Volumes:
-      - Volume
+  InstanceTypeParameter:
+    Type: String
+    Default: t2.micro  ## 無料枠
+    Description: "Ec2 Instance Type"
+
+  KeyName:
+    Description : Name of an existing EC2 KeyPair.
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: demo-ec2
+    ConstraintDescription : Can contain only ASCII characters.
+  SSHLocation:
+    Description: IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
+Mappings:
+  RegionMap:
+    # https://aws.amazon.com/jp/amazon-linux-ami/
+    # hvm ebs 64bit
+    ap-northeast-1:
+      hvm: "ami-06cd52961ce9f0d85" # For Tokyo
+    # ap-southeast-1:
+    #   hvm: "ami-08569b978cc4dfa10" # For Singapore
+
+Resources:
+
+  PublicEc2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', hvm]
+      InstanceType: !Ref InstanceTypeParameter
+      SubnetId: {"Fn::ImportValue": !Sub "${ProjectNameParameter}-PublicSubnet1a"}
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            # unit > GB
+            VolumeSize: 8
+      Tags:
+      - Key: Name
+        Value: PublicEc2
+      KeyName: !Ref KeyName
+      SecurityGroupIds:
+         - {"Fn::ImportValue": !Sub "${ProjectNameParameter}-Public-SG"}

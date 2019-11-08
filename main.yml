@@ -1,18 +1,18 @@
-AWSTemplateFormatVersion: "2010-09-09"
-Resources: 
-  # VpcStackWithParams: 
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties: 
-  #     TemplateURL: "./templates/vpc.yml"
+### TemplateURLはS3に置いたあとのものに書き換える
 
-  # Ec2StackWithParams: 
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties: 
-  #     TemplateURL: "./templates/ec2.yml"
-  #       Parameters:
+# AWSTemplateFormatVersion: "2010-09-09"
+# Resources: 
+#   VpcStackWithParams: 
+#     Type: AWS::CloudFormation::Stack
+#     Properties: 
+#       TemplateURL: "./templates/vpc.yml"
 
-  # RdsStackWithParams: 
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties: 
-  #     TemplateURL: "./templates/rds.yml"
-  #       Parameters: 
+#   Ec2StackWithParams: 
+#     Type: AWS::CloudFormation::Stack
+#     Properties: 
+#       TemplateURL: "./templates/ec2.yml"
+
+#   RdsStackWithParams: 
+#     Type: AWS::CloudFormation::Stack
+#     Properties: 
+#       TemplateURL: "./templates/rds.yml"
