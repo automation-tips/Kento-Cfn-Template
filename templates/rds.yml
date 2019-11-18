@@ -6,7 +6,7 @@ Parameters:
     Description: Project name for tag
   RDSInstanceTypeParameter:
     Type: String
-    Default: 'db.t2.micro'  ## 12ヶ月無料枠
+    Default: 'db.t2.micro' ## 12ヶ月無料枠
     Description: rds instance type
   RDSUserParameter:
     Type: String
@@ -19,7 +19,7 @@ Parameters:
 
 Resources:
   RDSParameterGroup:
-    Type: "AWS::RDS::DBParameterGroup"
+    Type: 'AWS::RDS::DBParameterGroup'
     Properties:
       Description: !Sub ${ProjectNameParameter} RDS Parameter Group
       Family: MySQL5.7
@@ -30,12 +30,12 @@ Resources:
         character_set_connection: utf8mb4
 
   RDSSubnetGroup:
-    Type: "AWS::RDS::DBSubnetGroup"
+    Type: 'AWS::RDS::DBSubnetGroup'
     Properties:
       DBSubnetGroupDescription: !Sub ${ProjectNameParameter} RDS subnet group
       SubnetIds:
-        - {"Fn::ImportValue": !Sub "${ProjectNameParameter}-PrivateSubnet1a"}
-        - {"Fn::ImportValue": !Sub "${ProjectNameParameter}-PrivateSubnet1c"}
+        - {'Fn::ImportValue': !Sub '${ProjectNameParameter}-PrivateSubnet1a'}
+        - {'Fn::ImportValue': !Sub '${ProjectNameParameter}-PrivateSubnet1c'}
 
   # vpc.ymlで作成したものを使用する
   # RDSSecurityByEC2SecurityGroup:
@@ -45,30 +45,31 @@ Resources:
   #     EC2VpcId: {"Fn::ImportValue": !Sub "${ProjectNameParameter}-VPC"}
 
   RDSInstance:
-    Type: "AWS::RDS::DBInstance"
+    Type: 'AWS::RDS::DBInstance'
+    DeletionPolicy: Retain ## スタック削除時にインスタンスを維持
     Properties:
       DBName:
         Ref: ProjectNameParameter
       DBInstanceIdentifier: !Sub ${AWS::StackName}
       AutoMinorVersionUpgrade: false
-      AllocatedStorage: "30"
+      AllocatedStorage: '20' ## 無料枠
       MultiAZ: false
       DBSubnetGroupName:
         Ref: RDSSubnetGroup
       DBParameterGroupName:
         Ref: RDSParameterGroup
       VPCSecurityGroups:
-        - {"Fn::ImportValue": !Sub "${ProjectNameParameter}-Private-SG"}
+        - {'Fn::ImportValue': !Sub '${ProjectNameParameter}-Private-SG'}
       DBInstanceClass:
         Ref: RDSInstanceTypeParameter
-      Engine: "MySQL"
-      StorageType: "gp2"
-      EngineVersion: "5.7"
+      Engine: 'MySQL'
+      StorageType: 'gp2'
+      EngineVersion: '5.7'
       MasterUsername:
-        Ref: "RDSUserParameter"
+        Ref: 'RDSUserParameter'
       MasterUserPassword:
-        Ref: "RDSPasswordParameter"
+        Ref: 'RDSPasswordParameter'
       Tags:
-      - Key: Project
-        Value:
-          Ref: ProjectNameParameter
+        - Key: Project
+          Value:
+            Ref: ProjectNameParameter
